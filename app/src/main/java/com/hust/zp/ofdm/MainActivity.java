@@ -31,6 +31,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 ofdmTransmitter.MsgToByte();
                 ofdmTransmitter.ByteToBit();
                 ofdmTransmitter.grayCode();
+                ofdmTransmitter.GrayToQpsk();
                 break;
             default:
                 break;

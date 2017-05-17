@@ -2,6 +2,9 @@ package com.hust.zp.ofdm;
 
 import android.util.Log;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by zhanpeng on 2017/5/8.
  */
@@ -15,13 +18,14 @@ public class OfdmTransmitter {
     //private String[] bitGrayString;
     private String grayCode = "";
     //private int[] grayByte;
+    private List list = new ArrayList();
 
-    public OfdmTransmitter(String msg){
+    OfdmTransmitter(String msg){
         this.msg = msg;
     }
 
     //转换成字节流
-    public void MsgToByte(){
+    void MsgToByte(){
         msgByte = msg.getBytes();
         Log.d(TAG, "MsgToByte.length: " + msgByte.length);
         for (Byte byt: msgByte
@@ -31,7 +35,7 @@ public class OfdmTransmitter {
     }
 
     //转换成bit流
-    public void ByteToBit(){
+    void ByteToBit(){
         for (int i = 0; i < msgByte.length; i++) {
             bitString += ""  +((msgByte[i] >> 7) & 0x1) +
                     ((msgByte[i] >> 6) & 0x1) +
@@ -83,7 +87,7 @@ public class OfdmTransmitter {
  */
 
     //转换成格雷码
-    public void grayCode(){
+    void grayCode(){
         //int[] grayByte = new int[bitString.length];
         //char[] bitMsg = bitString.toCharArray();
         StringBuilder str = new StringBuilder(bitString);
@@ -96,4 +100,57 @@ public class OfdmTransmitter {
         Log.d(TAG, "grayCodeLength: " + grayCode.length());
     }
 
+    //进行qpsk调制
+    void GrayToQpsk(){
+        //将grayCode分为两路，a路为str1，b路为str2
+        String str1 = "";
+        String str2 = "";
+        char[] ch = grayCode.toCharArray();
+        List aList = new ArrayList();
+        List bList = new ArrayList();
+
+        /*
+        for (char cha: ch
+             ) {
+            Log.d(TAG, "ch: " + cha);
+        }
+        */
+        for (int i = 0; i < ch.length-1; i+=2) {
+            str1 += ch[i];
+            str2 += ch[i+1];
+        }
+        Log.d(TAG, "str1: " + str1);
+        Log.d(TAG, "str2: " + str2);
+
+        //将a路（即I相分量）数据变为双极性数据（1不变，0变为1），然后乘上√2/2
+        for (int i = 0; i < str1.length(); i++) {
+            if (Integer.parseInt(str1.substring(i,i + 1)) == 0){
+                aList.add(-Math.sqrt(2)/2);
+            }else {
+                aList.add(Math.sqrt(2)/2);
+            }
+        }
+        Log.d(TAG, "aList: " + aList);
+
+        //将b路（即Q相分量）数据变为双极性数据，同样乘上√2/2
+        for (int i = 0; i < str2.length(); i++) {
+            if (Integer.parseInt(str2.substring(i,i + 1)) == 0){
+                bList.add(-Math.sqrt(2)/2);
+            }else{
+                bList.add(Math.sqrt(2)/2);
+            }
+        }
+        Log.d(TAG, "bList: " + bList);
+
+        //将ab两路数据合并形成复数序列
+        for (int i = 0; i < aList.size(); i++) {
+            ComplexNum a = new ComplexNum((double)aList.get(i),(double)bList.get(i));
+            list.add(a);
+        }
+
+        for (int i = 0; i < list.size(); i++) {
+            Log.d(TAG, "list: " + ComplexNum.Display((ComplexNum) list.get(i)));
+        }
+        Log.d(TAG, "list: " + list.size());
+    }
 }
