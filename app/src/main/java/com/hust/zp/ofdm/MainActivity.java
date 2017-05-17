@@ -30,7 +30,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 ofdmTransmitter =new OfdmTransmitter(editText.getText().toString());
                 ofdmTransmitter.MsgToByte();
                 ofdmTransmitter.ByteToBit();
-                ofdmTransmitter.ByteToBit(ofdmTransmitter.GrayCode());
+                ofdmTransmitter.grayCode();
+                break;
+            default:
+                break;
         }
     }
 
