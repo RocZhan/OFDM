@@ -153,4 +153,42 @@ public class OfdmTransmitter {
         }
         Log.d(TAG, "list: " + list.size());
     }
+
+    //将qpsk调制的信号分段形成symbol
+    void QpskToSymbol(){
+        //将list分段，每20个复数分成一段
+        int numSeg;
+        int index = 0;
+        if (list.size() % 20 == 0){
+            numSeg = list.size()/20;
+        }else{
+            numSeg = list.size()/20 + 1;
+            //numLastSeg = list.size() % 20;
+        }
+
+        Log.d(TAG, "numSeg: " + numSeg);
+
+        ComplexNum arr[][] = new ComplexNum[numSeg][20];
+        for (int i = 0; i < numSeg; i++) {
+            for (int j = 0; j < 20; j++) {
+                if (list.size() % 20 == 0){
+                    arr[i][j] = (ComplexNum) list.get(index);
+                }else{
+                    if (index < (numSeg-1) * 20) {
+                        arr[i][j] = (ComplexNum) list.get(index);
+                    }else if(index < list.size()){
+                        arr[i][j] = (ComplexNum)list.get(index);
+                    }else if (index < numSeg * 20){
+                        arr[i][j] = new ComplexNum(0,0);
+                    }
+                }
+                index++;
+            }
+        }
+        for (int i = 0; i < numSeg; i++) {
+            for (int j = 0; j < 20; j++) {
+                Log.d(TAG, "arr[][]: " + ComplexNum.Display(arr[i][j]));
+            }
+        }
+    }
 }
