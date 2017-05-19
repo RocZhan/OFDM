@@ -6,34 +6,34 @@ package com.hust.zp.ofdm;
 
 public class ComplexNum {
     //定义实部和虚部
-    private double rez;
-    private double imz;
+    public float real;
+    public float imag;
 
     //构造函数
     public ComplexNum(){}
 
-    public ComplexNum(double rez,double imz){
-        this.rez = rez;
-        this.imz = imz;
+    public ComplexNum(float rez,float imz){
+        this.real = rez;
+        this.imag = imz;
     }
 
-    public double getRez(){
-        return rez;
+    public float getRez(){
+        return real;
     }
 
-    public double getImz(){
-        return imz;
+    public float getImz(){
+        return imag;
     }
 
     //复数加法
     public static ComplexNum Plus(ComplexNum a,ComplexNum b){
-        ComplexNum plusResult = new ComplexNum(a.rez + b.rez,a.imz + b.imz);
+        ComplexNum plusResult = new ComplexNum(a.real + b.real,a.imag + b.imag);
         return plusResult;
     }
 
     //复数减法
     public static ComplexNum Minus(ComplexNum a,ComplexNum b){
-        ComplexNum minusResult = new ComplexNum(a.rez - b.rez,a.imz - b.imz);
+        ComplexNum minusResult = new ComplexNum(a.real - b.real,a.imag - b.imag);
         return minusResult;
     }
 
@@ -43,7 +43,7 @@ public class ComplexNum {
         sb.append(a.getRez());
         if (a.getImz() > 0){
             sb.append("+" + a.getImz() + "i");
-        }else if(a.imz < 0){
+        }else if(a.imag < 0){
             sb.append(a.getImz() + "i");
         }
         //System.out.println(sb.toString());

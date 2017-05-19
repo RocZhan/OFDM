@@ -32,7 +32,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 ofdmTransmitter.ByteToBit();
                 ofdmTransmitter.grayCode();
                 ofdmTransmitter.GrayToQpsk();
-                ofdmTransmitter.QpskToSymbol();
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        ofdmTransmitter.QpskToSymbol();
+                    }
+                }).start();
                 break;
             default:
                 break;

@@ -19,6 +19,9 @@ public class OfdmTransmitter {
     private String grayCode = "";
     //private int[] grayByte;
     private List list = new ArrayList();
+    private ComplexNum[][] symbolPadding;
+    private float[][] ifftData;
+    private FFT fft;
 
     OfdmTransmitter(String msg){
         this.msg = msg;
@@ -101,6 +104,7 @@ public class OfdmTransmitter {
     }
 
     //进行qpsk调制
+    @SuppressWarnings("unchecked")
     void GrayToQpsk(){
         //将grayCode分为两路，a路为str1，b路为str2
         String str1 = "";
@@ -125,26 +129,26 @@ public class OfdmTransmitter {
         //将a路（即I相分量）数据变为双极性数据（1不变，0变为1），然后乘上√2/2
         for (int i = 0; i < str1.length(); i++) {
             if (Integer.parseInt(str1.substring(i,i + 1)) == 0){
-                aList.add(-Math.sqrt(2)/2);
+                aList.add((float)-Math.sqrt(2)/2);
             }else {
-                aList.add(Math.sqrt(2)/2);
+                aList.add((float)Math.sqrt(2)/2);
             }
         }
-        Log.d(TAG, "aList: " + aList);
+        //Log.d(TAG, "aList: " + aList);
 
         //将b路（即Q相分量）数据变为双极性数据，同样乘上√2/2
         for (int i = 0; i < str2.length(); i++) {
             if (Integer.parseInt(str2.substring(i,i + 1)) == 0){
-                bList.add(-Math.sqrt(2)/2);
+                bList.add((float)-Math.sqrt(2)/2);
             }else{
-                bList.add(Math.sqrt(2)/2);
+                bList.add((float)Math.sqrt(2)/2);
             }
         }
-        Log.d(TAG, "bList: " + bList);
+        //Log.d(TAG, "bList: " + bList);
 
         //将ab两路数据合并形成复数序列
         for (int i = 0; i < aList.size(); i++) {
-            ComplexNum a = new ComplexNum((double)aList.get(i),(double)bList.get(i));
+            ComplexNum a = new ComplexNum((float)aList.get(i),(float)bList.get(i));
             list.add(a);
         }
 
@@ -157,7 +161,7 @@ public class OfdmTransmitter {
     //将qpsk调制的信号分段形成symbol
     void QpskToSymbol(){
         //将list分段，每20个复数分成一段
-        int numSeg;
+        int numSeg;//讲bits的数量除以20得到的段数
         int index = 0;
         if (list.size() % 20 == 0){
             numSeg = list.size()/20;
@@ -168,27 +172,70 @@ public class OfdmTransmitter {
 
         Log.d(TAG, "numSeg: " + numSeg);
 
-        ComplexNum arr[][] = new ComplexNum[numSeg][20];
+        //定义一个二维数组，将复数信息按顺序存储到对应的段中
+        ComplexNum symbol[][] = new ComplexNum[numSeg][20];
         for (int i = 0; i < numSeg; i++) {
             for (int j = 0; j < 20; j++) {
                 if (list.size() % 20 == 0){
-                    arr[i][j] = (ComplexNum) list.get(index);
+                    symbol[i][j] = (ComplexNum) list.get(index);
                 }else{
                     if (index < (numSeg-1) * 20) {
-                        arr[i][j] = (ComplexNum) list.get(index);
+                        symbol[i][j] = (ComplexNum) list.get(index);
                     }else if(index < list.size()){
-                        arr[i][j] = (ComplexNum)list.get(index);
+                        symbol[i][j] = (ComplexNum)list.get(index);
                     }else if (index < numSeg * 20){
-                        arr[i][j] = new ComplexNum(0,0);
+                        symbol[i][j] = new ComplexNum(0,0);
                     }
                 }
                 index++;
             }
         }
+
         for (int i = 0; i < numSeg; i++) {
+            Log.d(TAG, "symbol[][]: " + i);
             for (int j = 0; j < 20; j++) {
-                Log.d(TAG, "arr[][]: " + ComplexNum.Display(arr[i][j]));
+                Log.d(TAG, "symbol[][]: " + ComplexNum.Display(symbol[i][j]) + " " + i +" " + j);
             }
+        }
+
+        //在每个symbol左侧补充180个零，右侧补充280个零
+        symbolPadding = new ComplexNum[numSeg][480];
+        for (int i = 0; i < numSeg; i++) {
+            for (int j = 0; j < 480; j++) {
+                if (j < 180){
+                    symbolPadding[i][j] = new ComplexNum(0,0);
+                }else if (j < 200){
+                    symbolPadding[i][j] = symbol[i][j-180];
+                }else {
+                    symbolPadding[i][j] = new ComplexNum(0,0);
+                }
+            }
+        }
+        /*
+        for (int i = 0; i < numSeg; i++) {
+            Log.d(TAG, "symbolPadding[][]: " + i);
+            for (int j = 0; j < 480; j++) {
+                //Log.d(TAG, "symbolPadding[][]: " + ComplexNum.Display(symbolPadding[i][j]) + " " + i +" " + j);
+                System.out.print(ComplexNum.Display(symbolPadding[i][j]) + " ");
+            }
+            System.out.println("symbolPadding[]的长度" + symbolPadding[i].length);
+        }
+        */
+
+        fft = new FFT(480);
+        for (int i = 0; i < numSeg; i++) {
+            Log.d(TAG, "IFFT Start" );
+            fft.IFFT(symbolPadding[i]);
+            ifftData[i] = fft.magnitude(symbolPadding[i]);
+        }
+
+
+        for (int i = 0; i < numSeg; i++) {
+            for (int j = 0; j < 480; j++) {
+                //System.out.print(ifftData[i][j] + " ");
+                Log.d(TAG, "ifftData: " + ifftData[i][j] + " " + j);
+            }
+            //System.out.println();
         }
     }
 }
