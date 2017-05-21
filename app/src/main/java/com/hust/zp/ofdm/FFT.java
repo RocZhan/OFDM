@@ -36,7 +36,7 @@ public class FFT {
         for(int i=0;i<data.length;i++)
         {
             w[i].real = data[i];
-            //w[i].imag = 0.0f;
+            w[i].imag = 0.0f;
         }
         return w;
     }

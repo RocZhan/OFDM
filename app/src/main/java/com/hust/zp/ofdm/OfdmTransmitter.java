@@ -22,6 +22,7 @@ public class OfdmTransmitter {
     private ComplexNum[][] symbolPadding;
     private float[][] ifftData;
     private FFT fft;
+    public int numSeg;
 
     OfdmTransmitter(String msg){
         this.msg = msg;
@@ -159,9 +160,9 @@ public class OfdmTransmitter {
     }
 
     //将qpsk调制的信号分段形成symbol
-    void QpskToSymbol(){
+    float[] QpskToSymbol(){
         //将list分段，每20个复数分成一段
-        int numSeg;//讲bits的数量除以20得到的段数
+        //int numSeg;//讲bits的数量除以20得到的段数
         int index = 0;
         if (list.size() % 20 == 0){
             numSeg = list.size()/20;
@@ -199,43 +200,96 @@ public class OfdmTransmitter {
         }
 
         //在每个symbol左侧补充180个零，右侧补充280个零
-        symbolPadding = new ComplexNum[numSeg][480];
+        symbolPadding = new ComplexNum[numSeg][512];
         for (int i = 0; i < numSeg; i++) {
-            for (int j = 0; j < 480; j++) {
+            for (int j = 0; j < 512; j++) {
                 if (j < 180){
                     symbolPadding[i][j] = new ComplexNum(0,0);
-                }else if (j < 200){
+                } else if (j < 200){
                     symbolPadding[i][j] = symbol[i][j-180];
                 }else {
                     symbolPadding[i][j] = new ComplexNum(0,0);
                 }
             }
         }
-        /*
+
         for (int i = 0; i < numSeg; i++) {
             Log.d(TAG, "symbolPadding[][]: " + i);
-            for (int j = 0; j < 480; j++) {
+            for (int j = 0; j < 512; j++) {
                 //Log.d(TAG, "symbolPadding[][]: " + ComplexNum.Display(symbolPadding[i][j]) + " " + i +" " + j);
                 System.out.print(ComplexNum.Display(symbolPadding[i][j]) + " ");
             }
             System.out.println("symbolPadding[]的长度" + symbolPadding[i].length);
         }
-        */
 
-        fft = new FFT(480);
+
+        ifftData = new float[numSeg][512];
+        float[] audioData = new float[numSeg * 512];
+        fft = new FFT(512);
         for (int i = 0; i < numSeg; i++) {
             Log.d(TAG, "IFFT Start" );
             fft.IFFT(symbolPadding[i]);
-            ifftData[i] = fft.magnitude(symbolPadding[i]);
+            //ifftData[i] = fft.magnitude(symbolPadding[i]);
         }
+
+        Log.d(TAG, "symbolPadding: ");
+        for (int i = 0; i < numSeg; i++) {
+            for (int j = 100; j < 200; j++) {
+                System.out.print(ComplexNum.Display(symbolPadding[i][j]) + " ");
+            }
+            System.out.println();
+        }
+
+        int count = 0;
+        for (int i = 0; i < numSeg; i++) {
+            for (int j = 0; j < 512; j++) {
+                ifftData[i][j] = symbolPadding[i][j].real;
+            }
+        }
+
+        for (int i = 0; i < numSeg; i++) {
+            for (int j = 0; j < 512; j++) {
+                audioData[count] = ifftData[i][j];
+                count++;
+            }
+
+        }
+        return audioData;
+
+        /*
+        Log.d(TAG, "ifftData: ");
+        for (int i = 0; i < numSeg; i++) {
+            for (int j = 180; j < 200; j++) {
+                System.out.print(ifftData[i][j] + " ");
+            }
+            System.out.println();
+        }
+
+        ComplexNum[][] ifftRes = new ComplexNum[numSeg][];
+        for (int i = 0; i < numSeg; i++) {
+            ifftRes[i] = fft.complexLization(ifftData[i]);
+        }
+        Log.d(TAG, "ifftRes: " + ComplexNum.Display(ifftRes[0][0]) );
 
 
         for (int i = 0; i < numSeg; i++) {
-            for (int j = 0; j < 480; j++) {
-                //System.out.print(ifftData[i][j] + " ");
-                Log.d(TAG, "ifftData: " + ifftData[i][j] + " " + j);
-            }
-            //System.out.println();
+            fft.FFT(ifftRes[i]);
         }
+
+        Log.d(TAG, "ifftRes: ");
+        for (int i = 0; i < numSeg; i++) {
+            for (int j = 180; j < 200; j++) {
+                System.out.print(ComplexNum.Display(ifftRes[i][j]) + " ");
+            }
+            System.out.println();
+        }
+
+        for (int i = 0; i < numSeg; i++) {
+            for (int j = 0; j < 512; j++) {
+                System.out.print(ifftData[i][j] + " ");
+                //Log.d(TAG, "ifftData: " + ifftData[i][j] + " " + j);
+            }
+            System.out.println();
+        }*/
     }
 }
